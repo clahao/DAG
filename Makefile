@@ -8,27 +8,43 @@ CXXFLAGS += -Wall -Wextra -Wcast-align -Wcast-qual -Wconversion -Wfloat-equal \
 LDLIBS   += -ltcmalloc_minimal -lnuma
 CFLAGS += -I /home/lyj/package/boost_1_58_0/include
 LDFLAGS += -L /home/lyj/package/boost_1_58_0/lib
-TARGETS   = sssp_scc
-TARGETS1  =  sssp_async
-TARGETS2  =  sssp_sync
-all : $(TARGETS) $(TARGETS1) $(TARGETS2)
+TARGETS_SSSP_SCC   = sssp_scc
+TARGETS_SSSP_ASYNC  =  sssp_async
+TARGETS_SSSP_SYNC  =  sssp_sync
+TARGETS_SSWP_SCC   = sswp_scc
+TARGETS_SSWP_ASYNC  =  sswp_async
+TARGETS_SSWP_SYNC  =  sswp_sync
+all : $(TARGETS_SSSP_SCC) $(TARGETS_SSSP_ASYNC) $(TARGETS_SSSP_SYNC) $(TARGETS_SSWP_SCC) $(TARGETS_SSWP_ASYNC) $(TARGETS_SSWP_SYNC)
 
-$(TARGETS): %: %.cpp
-	$(LINK.cc) -MD -o $@ $< $(LDLIBS) $(CFLAGS) $(LDFLAGS) -w
+$(TARGETS_SSSP_SCC): %: %.cpp
+	@$(LINK.cc) -MD -o $@ $< $(LDLIBS) $(CFLAGS) $(LDFLAGS) -w
 	@cp $*.d .$*.P; \
 	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
 	      -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> .$*.P; \
 	  rm -f $*.d
 
-$(TARGETS1): %: %.cpp
-	$(LINK.cc) -MD -o $@ $< -w
+$(TARGETS_SSSP_ASYNC): %: %.cpp
+	@g++ -o $@ $< -w
 
-$(TARGETS2): %: %.cpp
-	$(LINK.cc) -MD -o $@ $< -w
+$(TARGETS_SSSP_SYNC): %: %.cpp
+	@g++ -o $@ $< -w
+
+$(TARGETS_SSWP_SCC): %: %.cpp
+	@$(LINK.cc) -MD -o $@ $< $(LDLIBS) $(CFLAGS) $(LDFLAGS) -w
+	@cp $*.d .$*.P; \
+	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	      -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> .$*.P; \
+	  rm -f $*.d
+
+$(TARGETS_SSWP_ASYNC): %: %.cpp
+	@g++ -o $@ $< -w
+
+$(TARGETS_SSWP_SYNC): %: %.cpp
+	@g++ -o $@ $< -w
 
 .PHONY: clean
 clean:
-	$(RM) $(TARGETS) $(TARGETS:%=.%.P)
+	@$(RM) $(TARGETS) $(TARGETS:%=.%.P)
 
 -include .*.P
 

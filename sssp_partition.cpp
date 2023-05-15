@@ -5,75 +5,13 @@
 #include <algorithm>
 #include <fstream>
 #include <queue>
-#include <set>
 #include <limits>
 #include <cassert>
 #include <iomanip>
 #include "Graph.h"
 #include "Graph.cpp"
 
-using namespace std;
 
-class Bitmap {
-public:
-    Bitmap(size_t size) : data_((size + 31) / 32) {}
-
-    bool get(size_t index) const {
-        return (data_[index / 32] >> (index % 32)) & 1;
-    }
-
-    void set(size_t index) {
-        data_[index / 32] |= (1u << (index % 32));
-    }
-
-    void reset(size_t index) {
-        data_[index / 32] &= ~(1u << (index % 32));
-    }
-
-public:
-    vector<unsigned int> data_;
-};
-
-// CSR structure to store the graph in compressed sparse row format
-struct CSR {
-    int n;                   // number of vertices
-    vector<int> row_ptr;     // row pointers of the CSR matrix
-    vector<int> col_idx;     // column indices of the CSR matrix
-    vector<int> weights;     // edge weights of the CSR matrix
-
-    vector<int> neighbors(int u) const {
-      vector<int> result;
-      for (int i = row_ptr[u]; i < row_ptr[u+1]; ++i) {
-          result.push_back(col_idx[i]);
-      }
-      return result;
-    }
-
-    vector<int> neighbors_weights(int u) const {
-      vector<int> result;
-      for (int i = row_ptr[u]; i < row_ptr[u+1]; ++i) {
-          result.push_back(weights[i]);
-      }
-      return result;
-    }
-};
-
-vector<int> vertex_n_partion(int index, int n, int num){
-    // int num = (n+partiton-1) / partiton;
-    // int k = index / num; //从0开始
-    vector<int> src;
-    int vertex_index = index*num;
-    for(int i=0;i<num&&vertex_index+i<n;i++){
-        src.push_back(vertex_index + i);
-    }
-    return src;
-}
-
-int get_partition(int i, int num){
-    return i/num;
-}
-
-const int INF = numeric_limits<int>::max()/2 - 1;
 // 记录迭代轮次
 void sssp_reoeder(long long int &cal_times, const CSR& csr, set<int> start, vector<int> row_map, vector<int> col_map, vector<int> row_inv_map, vector<int> col_inv_map,vector<int> &global_dist, int start_id, int num_node ,int num){
 //  int n = csr.n;

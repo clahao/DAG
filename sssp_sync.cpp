@@ -1,11 +1,11 @@
 //
 // Created by moyu on 2023/5/10.
 //
-#include "sssp_partition.cpp"
-
+#include "Graph.cpp"
+#include "timer.h"
+#include "timer.cpp"
 
 void sssp_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<int> &global_dist, int start_id, int num_node ,int num){
-    int num0 = 0;
     int n = num_node;
     int partition = (n+num-1) / num;
     if(start.size() == 0)
@@ -36,11 +36,9 @@ void sssp_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<
 
             vector<int> vertexs = vertex_n_partion(part, n, num);
             vector<bool> bm_cnt(partition,false); //模拟去0
-            num0 = 0;
             for(int i=0;i<vertexs.size();i++){
                 int u = vertexs[i];
                 if(bm.get(u) == 1){
-                    num0++;
                     vector<int> neigh = csr.neighbors(u);
                     vector<int> neighbors_w = csr.neighbors_weights(u);
                     for(int j=0;j<neigh.size();j++){
@@ -110,7 +108,11 @@ int main(int argc, char ** argv){
     long long int cal_times = 0;
     set<int> start;
     start.insert(source_node);
+    Timer timer;
+    timer.Start();
     sssp_sync(cal_times,csr,start,global_dist,0,graph.num_nodes,num);
+    float runtime = timer.Finish();
+    cout << "Processing finished in " << runtime/1000 << " (s).\n";
     cout<<"calculation times: "<<cal_times<<endl;
     int update_num = 0;
     for(int i = 0; i < graph.num_nodes; i ++){

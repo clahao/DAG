@@ -1,11 +1,12 @@
 //
-// Created by moyu on 2023/5/10.
+// Created by moyu on 2023/5/15.
 //
 #include "Graph.cpp"
 #include "timer.h"
 #include "timer.cpp"
 
-void sssp_async(long long int &cal_times, const CSR& csr, set<int> start, vector<int> &global_dist, int start_id, int num_node ,int num){
+
+void sssp_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<int> &global_dist, int start_id, int num_node ,int num){
     int n = num_node;
     int partition = (n+num-1) / num;
     if(start.size() == 0)
@@ -27,36 +28,41 @@ void sssp_async(long long int &cal_times, const CSR& csr, set<int> start, vector
         q.push(get_partition(i-start_id, num));
     }
     while (!q.empty()) {
-        int part = q.front();
-        q.pop();
-        bm_part.reset(part);
+        int s = q.size();
         set<int> need_update;
-        vector<int> vertexs = vertex_n_partion(part, n, num);
-        vector<bool> bm_cnt(partition,false); //模拟去0
-        for(int i=0;i<vertexs.size();i++){
-            int u = vertexs[i];
-            if(bm.get(u) == 1){
-                vector<int> neigh = csr.neighbors(u);
-                vector<int> neighbors_w = csr.neighbors_weights(u);
-                for(int j=0;j<neigh.size();j++){
-                    int v = neigh[j];
-                    int part_v = get_partition(v,num);
-                    if(bm_cnt[part_v] == false){
-                        cal_times += num * num;
-                        bm_cnt[part_v] = true;
+        while(s--){
+            int part = q.front();
+            q.pop();
+            bm_part.reset(part);
+
+            vector<int> vertexs = vertex_n_partion(part, n, num);
+            vector<bool> bm_cnt(partition,false); //模拟去0
+            for(int i=0;i<vertexs.size();i++){
+                int u = vertexs[i];
+                if(bm.get(u) == 1){
+                    vector<int> neigh = csr.neighbors(u);
+                    vector<int> neighbors_w = csr.neighbors_weights(u);
+                    for(int j=0;j<neigh.size();j++){
+                        int v = neigh[j];
+                        int part_v = get_partition(v,num);
+                        if(bm_cnt[part_v] == false){
+                            cal_times += num * num;
+                            bm_cnt[part_v] = true;
+                        }
+                        int vweight = neighbors_w[j];
+                        dist_old[v] = max(dist_old[v], min(vweight,dist[u]));
+                        if(dist_old[v] > dist[v]){
+                            need_update.insert(v);
+                        }
                     }
-                    int vweight = neighbors_w[j];
-                    dist_old[v] = min(dist_old[v], vweight + dist[u]);
-                    if(dist_old[v] < dist[v]){
-                        need_update.insert(v);
-                    }
+                    bm.reset(u);
                 }
-                bm.reset(u);
             }
         }
+
         for(auto nu : need_update){
-            if(dist[nu] > dist_old[nu]){
-                dist[nu] = min(dist[nu], dist_old[nu]);
+            if(dist[nu] < dist_old[nu]){
+                dist[nu] = max(dist[nu], dist_old[nu]);
                 dist_old[nu] = dist[nu];
                 int part = get_partition(nu, num);
                 if(bm_part.get(part) == 0){
@@ -90,8 +96,8 @@ int main(int argc, char ** argv){
     csr.col_idx.assign(graph.num_edges, 0);
     csr.weights.assign(graph.num_edges, 0);
 
-    vector<int> global_dist = vector<int>(graph.num_nodes,INF);
-    global_dist[source_node] = 0;
+    vector<int> global_dist = vector<int>(graph.num_nodes,0);
+    global_dist[source_node] = INF;
 
     for(int i = 0; i <= graph.num_nodes; i ++)
         csr.row_ptr[i] = int(graph.offset[i]);
@@ -105,13 +111,13 @@ int main(int argc, char ** argv){
     start.insert(source_node);
     Timer timer;
     timer.Start();
-    sssp_async(cal_times,csr,start,global_dist,0,graph.num_nodes,num);
+    sssp_sync(cal_times,csr,start,global_dist,0,graph.num_nodes,num);
     float runtime = timer.Finish();
     cout << "Processing finished in " << runtime/1000 << " (s).\n";
     cout<<"calculation times: "<<cal_times<<endl;
     int update_num = 0;
     for(int i = 0; i < graph.num_nodes; i ++){
-        if(global_dist[i] != INF)
+        if(global_dist[i] != 0)
             update_num ++;
     }
     cout<<"updated vertex num: "<<update_num<<endl;

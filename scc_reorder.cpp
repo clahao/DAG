@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <stack>
+#include <algorithm>
 #include "sssp_partition.cpp"
 #include "Graph.h"
 #include "Graph.cpp"
