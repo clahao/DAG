@@ -12,3 +12,7 @@ add_executable(SSSP_SCC sssp_scc.cpp Graph.h)
 add_executable(weighted_convertor weighted_convertor.cpp)
 
 add_executable(weighted_generator weighted_generator.cpp)
+
+add_executable(SSSP_ASYNC sssp_async.cpp Graph.h)
+
+add_executable(SSSP_SYNC sssp_sync.cpp Graph.h)

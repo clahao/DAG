@@ -1042,17 +1042,29 @@ void sssp_diag_iter_priority(long long int &cal_times, int node_index, const CSR
     Bitmap bm_part(partition);
 //    queue<int> q;
     for(auto i:start){
-        bm_part.set(get_partition(node_map[i-start_id], num));
-//        q.push(get_partition(node_map[i-start_id], num));
-
-        priorityQueue.push(make_pair(get_partition(node_map[i-start_id], num),global_dist[i]));
-//        if(map.count(get_partition(node_map[i-start_id], num)) == 0){
-//            map[get_partition(node_map[i-start_id], num)] = global_dist[i];
-//        }
-//        else{
-//            map[get_partition(node_map[i-start_id], num)] = min(map[get_partition(node_map[i-start_id], num)],global_dist[i]);
-//        }
+        int part = get_partition(node_map[i-start_id], num);
+        bm_part.set(part);
+        priorityQueue.push(make_pair(part,global_dist[i]));
     }
+
+//    vector<bool> is_inserted(partition, false);
+//    for(auto i:start){
+//        int part = get_partition(node_map[i-start_id], num);
+//        if(!is_inserted[part]){
+//            is_inserted[part] = true;
+//            vector<int> vertexs = vertex_n_partion(part, n, num);
+//            double priority = 0;
+//            int active_num = 0;
+//            for(int j=0;j<vertexs.size();j++) {
+//                int u = vertexs[j];
+//                if (bm.get(u) == 1) {
+//                    active_num ++;
+//                    priority += dist[node_inv_map[u]];
+//                }
+//            }
+//            priorityQueue.push(make_pair(part,priority/active_num));
+//        }
+//    }
 
 //    bool is_finished = false;
     while (!priorityQueue.empty()) {
@@ -1164,12 +1176,17 @@ void sssp_diag_iter_priority(long long int &cal_times, int node_index, const CSR
                     bm_part.set(part_nu);
                 }
                 if(bm.get(node_map[nu]) == 0){
-//                    if(map.count(part_nu) == 0){
-//                        map[part_nu] = dist[nu];
+//                    vector<int> vertexs = vertex_n_partion(part_nu, n, num);
+//                    double priority = 0;
+//                    int node_num = 0;
+//                    for(int j=0;j<vertexs.size();j++) {
+//                        int u = vertexs[j];
+//                        if (bm.get(u) == 1) {
+//                            node_num ++;
+//                            priority += dist[node_inv_map[u]];
+//                        }
 //                    }
-//                    else{
-//                        map[part_nu] = min(map[part_nu],dist[nu]);
-//                    }
+//                    priorityQueue.push(make_pair(part_nu,priority/node_num));
                     priorityQueue.push(make_pair(part_nu,dist[nu]));
                     bm.set(node_map[nu]);
                 }

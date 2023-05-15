@@ -9,6 +9,9 @@ LDLIBS   += -ltcmalloc_minimal -lnuma
 CFLAGS += -I /home/lyj/package/boost_1_58_0/include
 LDFLAGS += -L /home/lyj/package/boost_1_58_0/lib
 TARGETS   = sssp_scc
+TARGETS1  =  sssp_async
+TARGETS2  =  sssp_sync
+all : $(TARGETS) $(TARGETS1) $(TARGETS2)
 
 $(TARGETS): %: %.cpp
 	$(LINK.cc) -MD -o $@ $< $(LDLIBS) $(CFLAGS) $(LDFLAGS) -w
@@ -16,6 +19,12 @@ $(TARGETS): %: %.cpp
 	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
 	      -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> .$*.P; \
 	  rm -f $*.d
+
+$(TARGETS1): %: %.cpp
+	$(LINK.cc) -MD -o $@ $< -w
+
+$(TARGETS2): %: %.cpp
+	$(LINK.cc) -MD -o $@ $< -w
 
 .PHONY: clean
 clean:

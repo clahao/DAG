@@ -316,10 +316,11 @@ vector<vector<int>> reorder_degree(CSR csr, CSR csc, int num){
         }
     }
     sort(index.begin(),index.end(),cmp);
+//    vector<vector<set<int>>> block(16,vector<set<int>>());
     int node_index = 0;
     for(int i = 0; i < num_node; i ++){
         int node_id = i;//index[i].first;
-        if(!is_visited[node_id]){   //从当前未访问顶点中度数最高的顶点开始
+        if(!is_visited[node_id]){
             is_visited[node_id] = true;
             int node_in_block = 1;  //已经找到的顶点数(总共16个)
             queue<int> node_q;      //已经找到的顶点
@@ -385,6 +386,14 @@ vector<vector<int>> reorder_degree(CSR csr, CSR csc, int num){
                     node_q.pop();
                     is_visited[node] = false;
                 }
+//                set<int> Set;
+//                int q_size = node_q.size();
+//                for(int j = 0; j < q_size; j ++){
+//                    int node = node_q.front();
+//                    node_q.pop();
+//                    Set.insert(node);
+//                }
+//                block[q_size].push_back(Set);
             }
         }
     }
