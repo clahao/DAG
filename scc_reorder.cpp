@@ -266,6 +266,7 @@ vector<int> scc_reorder(int &source_node, int &max_scc_id, int num_nodes, int nu
     cout<<"vertex reorder finfshed"<<endl;
     cout<<"largest scc id: "<<max_scc_id<<endl;
     cout<<"vertex ratio of the largest scc: "<<double(max_scc_size)/num_nodes<<endl;
+    
     return inv_map;
 }
 
@@ -276,8 +277,8 @@ vector<int> top_scc(int &source_node, int &max_scc_id, int num_nodes, int num_ed
     int sccIndex = 0;
     stack<int> s;
     stack<int> S;
-    vector<int> dfn = vector<int>(num_nodes,0);
     vector<int> low = vector<int>(num_nodes,INT_INFINITY);
+    vector<int> dfn = vector<int>(num_nodes,0);
     vector<int> parent = vector<int>(num_nodes,0);
     vector<bool> inStack = vector<bool>(num_nodes,0);
 
@@ -317,7 +318,7 @@ vector<vector<int>> reorder_degree(CSR csr, CSR csc, int num){
         }
     }
     sort(index.begin(),index.end(),cmp);
-//    vector<vector<set<int>>> block(16,vector<set<int>>());
+//    vector<vector<queue<int>>> block(16,vector<queue<int>>());
     int node_index = 0;
     for(int i = 0; i < num_node; i ++){
         int node_id = i;//index[i].first;
@@ -387,17 +388,61 @@ vector<vector<int>> reorder_degree(CSR csr, CSR csc, int num){
                     node_q.pop();
                     is_visited[node] = false;
                 }
-//                set<int> Set;
+
+////                queue<int> Queue;
 //                int q_size = node_q.size();
-//                for(int j = 0; j < q_size; j ++){
-//                    int node = node_q.front();
-//                    node_q.pop();
-//                    Set.insert(node);
-//                }
-//                block[q_size].push_back(Set);
+////                for(int j = 0; j < q_size; j ++){
+////                    int node = node_q.front();
+////                    node_q.pop();
+////                    Queue.push(node);
+////                }
+//                block[q_size].push_back(node_q);
             }
         }
     }
+//    int cur_block = num - 1;
+//    vector<int> block_index(num-1,0);
+//    while(cur_block > 0){
+//        if(block[cur_block].size() > block_index[cur_block]){
+////            for(int j = 0; j < block[cur_block].size(); j ++){
+//                queue<int> Queue = block[cur_block][block_index[cur_block]++];
+////                block[cur_block].erase(block[cur_block].begin());
+//                int q_size = Queue.size();
+//                for(int k = 0; k < q_size; k ++){
+//                    int node = Queue.front();
+//                    Queue.pop();
+//                    node_map[node_index] = node;
+//                    node_map_inv[node] = node_index ++;
+//                }
+////            }
+//                int block_size = num - cur_block;
+//                int temp = block_size;
+//                while(temp > 0){
+//                    if(block_size == 0){
+//                        break;
+//                    }
+//                    if(block[block_size].size() > block_index[block_size]){
+//                        queue<int> Queue = block[block_size][block_index[block_size]++];
+//                        int q_size = Queue.size();
+//                        for(int k = 0; k < q_size; k ++){
+//                            int node = Queue.front();
+//                            Queue.pop();
+//                            node_map[node_index] = node;
+//                            node_map_inv[node] = node_index ++;
+//                        }
+//                        temp -= block_size;
+//                        if(temp < block_size)
+//                            block_size = temp;
+//                    }
+//                    else{
+//                        block_size --;
+//                    }
+//                }
+//        }
+//        else{
+//            cur_block --;
+//        }
+//    }
     if(csr.n > 1000)
     cout<<"num of node in 16-size-block:"<<csr.n<<" "<<node_index<<endl;
     vector<int> index_num;

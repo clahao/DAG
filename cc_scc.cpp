@@ -1,8 +1,8 @@
 //
-// Created by moyu on 2023/5/15.
+// Created by moyu on 2023/5/16.
 //
 #include "scc_reorder.cpp"
-#include "sswp_partition.cpp"
+#include "cc_partition.cpp"
 #include "timer.h"
 #include "timer.cpp"
 
@@ -41,21 +41,23 @@ int main(int argc, char ** argv) {
     int scc_num;
     int max_scc_id = 0;
     vector<int> map = top_scc(source_node,max_scc_id,graph.num_nodes,graph.num_edges,offset,neighbor,weight,scc_num,scc,scc_node_num,offset_scc,neighbor_scc,weight_scc,split_scc);
+
+    for(int i = 0; i < graph.num_nodes; i ++)
+        global_dist[map[i]] = i;
+
     int node_start_index = 0;     //当前连通分量第一个顶点的id
     long long int cal_times = 0;
     long long int cal_times_community = 0;
     long long int cal_times_between_communities = 0;
     vector<set<int>> start_node_list(scc_num,set<int>());       //活跃顶点集合
     vector<set<int>> neighbor_node_list(scc_num,set<int>());    //连通分量的邻居顶点集合
-    global_dist[map[source_node]] = INF;
-    start_node_list[scc[map[source_node]]].insert(map[source_node]);
+//    start_node_list[scc[map[source_node]]].insert(map[source_node]);
 
     timer.Start();
     cout << "Processing start"<<endl;
     for(int i = 0; i < scc_num; i ++){
-        if(start_node_list[i].empty()){
-            node_start_index += scc_node_num[i];
-            continue;
+        for(int j = 0; j < scc_node_num[i]; j ++){
+            start_node_list[i].insert(node_start_index+j);
         }
 
         if(scc_node_num[i] > 1){
@@ -154,7 +156,7 @@ int main(int argc, char ** argv) {
             int node_index = map_degree[2][0];
             //当前连通分量内部的状态传递
             long long int temp = cal_times;
-            sswp_diag_iter_priority(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
+            cc_diag_iter_priority(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
         }
 
 //        if(i != max_scc_id)
@@ -179,9 +181,9 @@ int main(int argc, char ** argv) {
                     visit[neighbor_id/num] = true;
                     part_num ++;
                 }
-                if(min(global_dist[node_id],weight_scc[split_scc[node_id]+k]) > global_dist[neighbor_id]){
-                    global_dist[neighbor_id] = min(global_dist[node_id],weight_scc[split_scc[node_id]+k]);
-                    start_node_list[scc[neighbor_id]].insert(neighbor_id);
+                if(global_dist[node_id] < global_dist[neighbor_id]){
+                    global_dist[neighbor_id] = global_dist[node_id];
+//                    start_node_list[scc[neighbor_id]].insert(neighbor_id);
 //                    cal_times ++;
                 }
 //                if(neighbor_node_list[i].count(neighbor_id) == 0){
@@ -202,7 +204,7 @@ int main(int argc, char ** argv) {
 //    cout<<"Proportion of calculation outside the community: "<<double(cal_times_between_communities)/cal_times_community<<endl;
     int update_num = 0;
     for(int i = 0; i < graph.num_nodes; i ++){
-        if(global_dist[i] != 0)
+        if(global_dist[map[i]] != i)
             update_num ++;
     }
     cout<<"updated vertex num: "<<update_num<<endl;

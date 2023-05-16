@@ -1,12 +1,12 @@
 //
-// Created by moyu on 2023/5/15.
+// Created by moyu on 2023/5/16.
 //
 #include "Graph.cpp"
 #include "timer.h"
 #include "timer.cpp"
 
 
-void sswp_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<int> &global_dist, int start_id, int num_node ,int num){
+void cc_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<int> &global_dist, int start_id, int num_node ,int num){
     int n = num_node;
     int partition = (n+num-1) / num;
     if(start.size() == 0)
@@ -41,7 +41,6 @@ void sswp_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<
                 int u = vertexs[i];
                 if(bm.get(u) == 1){
                     vector<int> neigh = csr.neighbors(u);
-                    vector<int> neighbors_w = csr.neighbors_weights(u);
                     for(int j=0;j<neigh.size();j++){
                         int v = neigh[j];
                         int part_v = get_partition(v,num);
@@ -49,9 +48,8 @@ void sswp_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<
                             cal_times += num * num;
                             bm_cnt[part_v] = true;
                         }
-                        int vweight = neighbors_w[j];
-                        dist_old[v] = max(dist_old[v], min(vweight,dist[u]));
-                        if(dist_old[v] > dist[v]){
+                        dist_old[v] = min(dist_old[v], dist[u]);
+                        if(dist_old[v] < dist[v]){
                             need_update.insert(v);
                         }
                     }
@@ -61,8 +59,8 @@ void sswp_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<
         }
 
         for(auto nu : need_update){
-            if(dist[nu] < dist_old[nu]){
-                dist[nu] = max(dist[nu], dist_old[nu]);
+            if(dist[nu] > dist_old[nu]){
+                dist[nu] = min(dist[nu], dist_old[nu]);
                 dist_old[nu] = dist[nu];
                 int part = get_partition(nu, num);
                 if(bm_part.get(part) == 0){
@@ -85,7 +83,7 @@ void sswp_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<
 int main(int argc, char ** argv){
     string filename(argv[1]);
     int num = stoi(argv[2]);
-    Graph<OutEdgeWeighted> graph(filename, true);
+    Graph<OutEdge> graph(filename, false);
     int source_node = 0;    //以重排序前的0顶点为源顶点
     if(argc == 4){
         source_node = stoi(argv[3]);
@@ -94,30 +92,29 @@ int main(int argc, char ** argv){
     csr.n = graph.num_nodes;
     csr.row_ptr.assign(csr.n+1, 0);
     csr.col_idx.assign(graph.num_edges, 0);
-    csr.weights.assign(graph.num_edges, 0);
 
     vector<int> global_dist = vector<int>(graph.num_nodes,0);
-    global_dist[source_node] = INF;
+    for(int i = 0; i < graph.num_nodes; i ++)
+        global_dist[i] = i;
 
     for(int i = 0; i <= graph.num_nodes; i ++)
         csr.row_ptr[i] = int(graph.offset[i]);
     for(int i = 0; i < graph.num_edges; i ++)
         csr.col_idx[i] = int(graph.edgeList[i].end);
-    for(int i = 0; i < graph.num_edges; i ++)
-        csr.weights[i] = int(graph.edgeList[i].w8);
 
     long long int cal_times = 0;
     set<int> start;
-    start.insert(source_node);
+    for(int i = 0; i < graph.num_nodes; i ++)
+        start.insert(i);
     Timer timer;
     timer.Start();
-    sswp_sync(cal_times,csr,start,global_dist,0,graph.num_nodes,num);
+    cc_sync(cal_times,csr,start,global_dist,0,graph.num_nodes,num);
     float runtime = timer.Finish();
     cout << "Processing finished in " << runtime/1000 << " (s).\n";
     cout<<"calculation times: "<<cal_times<<endl;
     int update_num = 0;
     for(int i = 0; i < graph.num_nodes; i ++){
-        if(global_dist[i] != 0)
+        if(global_dist[i] != i)
             update_num ++;
     }
     cout<<"updated vertex num: "<<update_num<<endl;

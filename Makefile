@@ -14,7 +14,17 @@ TARGETS_SSSP_SYNC  =  sssp_sync
 TARGETS_SSWP_SCC   = sswp_scc
 TARGETS_SSWP_ASYNC  =  sswp_async
 TARGETS_SSWP_SYNC  =  sswp_sync
-all : $(TARGETS_SSSP_SCC) $(TARGETS_SSSP_ASYNC) $(TARGETS_SSSP_SYNC) $(TARGETS_SSWP_SCC) $(TARGETS_SSWP_ASYNC) $(TARGETS_SSWP_SYNC)
+TARGETS_CC_SCC   = cc_scc
+TARGETS_CC_ASYNC  =  cc_async
+TARGETS_CC_SYNC  =  cc_sync
+
+all : $(TARGETS_SSSP_SCC) $(TARGETS_SSSP_ASYNC) $(TARGETS_SSSP_SYNC) \
+	  $(TARGETS_SSWP_SCC) $(TARGETS_SSWP_ASYNC) $(TARGETS_SSWP_SYNC) \
+	  $(TARGETS_CC_SCC) $(TARGETS_CC_ASYNC) $(TARGETS_CC_SYNC)
+
+sssp : $(TARGETS_SSSP_SCC) $(TARGETS_SSSP_ASYNC) $(TARGETS_SSSP_SYNC)
+sswp : $(TARGETS_SSWP_SCC) $(TARGETS_SSWP_ASYNC) $(TARGETS_SSWP_SYNC)
+cc : $(TARGETS_CC_SCC) $(TARGETS_CC_ASYNC) $(TARGETS_CC_SYNC)
 
 $(TARGETS_SSSP_SCC): %: %.cpp
 	@$(LINK.cc) -MD -o $@ $< $(LDLIBS) $(CFLAGS) $(LDFLAGS) -w
@@ -30,11 +40,7 @@ $(TARGETS_SSSP_SYNC): %: %.cpp
 	@g++ -o $@ $< -w
 
 $(TARGETS_SSWP_SCC): %: %.cpp
-	@$(LINK.cc) -MD -o $@ $< $(LDLIBS) $(CFLAGS) $(LDFLAGS) -w
-	@cp $*.d .$*.P; \
-	  sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
-	      -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> .$*.P; \
-	  rm -f $*.d
+	@g++ -o $@ $< -w
 
 $(TARGETS_SSWP_ASYNC): %: %.cpp
 	@g++ -o $@ $< -w
@@ -42,9 +48,21 @@ $(TARGETS_SSWP_ASYNC): %: %.cpp
 $(TARGETS_SSWP_SYNC): %: %.cpp
 	@g++ -o $@ $< -w
 
+$(TARGETS_CC_SCC): %: %.cpp
+	@g++ -o $@ $< -w
+
+$(TARGETS_CC_ASYNC): %: %.cpp
+	@g++ -o $@ $< -w
+
+$(TARGETS_CC_SYNC): %: %.cpp
+	@g++ -o $@ $< -w
+
 .PHONY: clean
 clean:
-	@$(RM) $(TARGETS) $(TARGETS:%=.%.P)
+	@$(RM) $(TARGETS_SSSP_SCC) $(TARGETS_SSSP_SCC:%=.%.P) $(TARGETS_SSSP_ASYNC) $(TARGETS_SSSP_SYNC)\
+     $(TARGETS_SSWP_SCC) $(TARGETS_SSWP_ASYNC) $(TARGETS_SSWP_SYNC) \
+	 $(TARGETS_CC_SCC) $(TARGETS_CC_ASYNC) $(TARGETS_CC_SYNC)
+
 
 -include .*.P
 
