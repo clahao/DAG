@@ -1066,8 +1066,9 @@ void sssp_diag_iter_priority(long long int &cal_times, int node_index, const CSR
                                 int vweight = neighbors_w[j];
                                 dist_old[v] = min(dist_old[v], vweight + dist[u]);
                                 if(dist_old[v] < dist[v]){
-                                    dist[v] = dist_old[v];
-                                    bm.set(node_map[v]);
+                                    need_update.insert(v);
+//                                    dist[v] = dist_old[v];
+//                                    bm.set(node_map[v]);
                                     finished = false;
                                     active_num ++;
                                 }
@@ -1076,9 +1077,16 @@ void sssp_diag_iter_priority(long long int &cal_times, int node_index, const CSR
                         }
                     }
                 }
+                for(auto nu : need_update){
+                    if(dist_old[nu] < dist[nu]){
+                        dist[nu] = dist_old[nu];
+                        bm.set(node_map[nu]);
+                    }
+                }
             }
         }
 
+        need_update.clear();
 
         for(int i=0;i<vertexs.size();i++){
             int u = vertexs[i];
