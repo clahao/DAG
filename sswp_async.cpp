@@ -23,8 +23,11 @@ void sswp_async(long long int &cal_times, const CSR& csr, set<int> start, vector
     Bitmap bm_part(partition);
     queue<int> q;
     for(auto i:start){
-        bm_part.set(get_partition(i-start_id, num));
-        q.push(get_partition(i-start_id, num));
+        int part = get_partition(i-start_id, num);
+        if(bm_part.get(part) == 0){
+            bm_part.set(part);
+            q.push(part);
+        }
     }
     while (!q.empty()) {
         int part = q.front();

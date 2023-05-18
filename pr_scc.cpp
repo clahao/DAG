@@ -129,7 +129,9 @@ int main(int argc, char ** argv) {
             int node_index = map_degree[2][0];
             //当前连通分量内部的状态传递
             long long int temp = cal_times;
-            pr_diag_iter(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_delta,global_value,ouDegree,node_start_index,scc_node_num[i],num);
+//            pr_diag_iter(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_delta,global_value,ouDegree,node_start_index,scc_node_num[i],num);
+//            pr_diag_iter_priority_plus(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_delta,global_value,ouDegree,indegree,node_start_index,scc_node_num[i],num);
+            pr_diag_iter_priority(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_delta,global_value,ouDegree,node_start_index,scc_node_num[i],num);
         }
         else if(scc_node_num[i] == 1){
             global_value[node_start_index] += global_delta[node_start_index];

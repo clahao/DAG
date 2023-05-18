@@ -33,6 +33,143 @@ struct cmp_cc_plus{
     }
 };
 
+void cc_diag_iter(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<int> &global_dist, int start_id, int num_node ,int num){
+//  int n = csr.n;
+    int n = num_node;
+    int partition = (n+num-1) / num;
+    if(start.size() == 0)
+        return;
+
+    unordered_map<int,int> map;//first:part second:priority
+    vector<int> dist(global_dist.begin()+start_id,global_dist.begin()+start_id+num_node);
+    vector<int> dist_old(global_dist.begin()+start_id,global_dist.begin()+start_id+num_node);
+    int part_index = node_index / num;  //需要进行块内迭代的块的数量
+
+    Bitmap bm(n);
+    for(auto i:start){
+        bm.set(node_map[i-start_id]);
+    }
+
+
+    Bitmap bm_part(partition);
+    queue<int> q;
+    for(auto i:start){
+        int part = get_partition(node_map[i-start_id], num);
+        if(bm_part.get(part) == 0){
+            bm_part.set(part);
+            q.push(part);
+        }
+
+    }
+
+
+    while (!q.empty()) {
+        int part = q.front();
+        q.pop();
+        if(bm_part.get(part) == 0)
+            continue;
+        bm_part.reset(part);
+        set<int> need_update;
+        vector<int> vertexs = vertex_n_partion(part, n, num);
+        vector<bool> bm_cnt(partition,false); //模拟去0
+        //迭代处理16*16块内的状态传递
+        bool finished = false;
+        bool is_add = false;
+        bool is_itr = false;
+        int active_num = 0;
+        for(int i=0;i<vertexs.size();i++) {
+            int u = vertexs[i];
+            if (bm.get(u) == 1) {
+                active_num ++;
+            }
+        }
+        if(active_num > 4){//} && part < part_index){
+            is_itr = true;
+            while(!finished && active_num > 0){
+                active_num = 0;
+                finished = true;
+                is_add = false;
+                for(int i=0;i<vertexs.size();i++){
+                    int u = vertexs[i];
+                    if(bm.get(u) == 1){
+                        u = node_inv_map[u];
+                        vector<int> neigh = csr.neighbors(u);
+                        for(int j=0;j<neigh.size();j++){
+                            int v = neigh[j];
+                            int part_v = get_partition(node_map[v],num);
+                            if(part_v == part){
+                                if(!is_add){
+                                    cal_times += num * num;
+                                    is_add = true;
+                                }
+                                dist_old[v] = min(dist_old[v], dist[u]);
+                                if(dist_old[v] < dist[v]){
+                                    need_update.insert(v);
+//                                    dist[v] = dist_old[v];
+//                                    bm.set(node_map[v]);
+                                    finished = false;
+                                    active_num ++;
+                                }
+                            }
+
+                        }
+                    }
+                }
+                for(auto nu : need_update){
+                    if(dist_old[nu] < dist[nu]){
+                        dist[nu] = dist_old[nu];
+                        bm.set(node_map[nu]);
+                    }
+                }
+            }
+        }
+
+        need_update.clear();
+
+        for(int i=0;i<vertexs.size();i++){
+            int u = vertexs[i];
+            if(bm.get(u) == 1){
+                u = node_inv_map[u];
+                vector<int> neigh = csr.neighbors(u);
+                for(int j=0;j<neigh.size();j++){
+                    int v = neigh[j];
+                    int part_v = get_partition(node_map[v],num);
+                    if(is_itr && part_v == part)
+                        continue;
+                    if(bm_cnt[part_v] == false){
+                        cal_times += num * num;
+                        bm_cnt[part_v] = true;
+                    }
+                    dist_old[v] = min(dist_old[v], dist[u]);
+                    if(dist_old[v] < dist[v]){
+                        need_update.insert(v);
+                    }
+                }
+                bm.reset(node_map[u]);
+            }
+        }
+        for(auto nu : need_update){
+            if(dist[nu] > dist_old[nu]){
+                dist[nu] = min(dist[nu], dist_old[nu]);
+                dist_old[nu] = dist[nu];
+                int part_nu = get_partition(node_map[nu], num);
+                if(bm_part.get(part_nu) == 0){
+                    q.push(part_nu);
+                    bm_part.set(part_nu);
+                }
+                if(bm.get(node_map[nu]) == 0){
+//                    priorityQueue.push(make_pair(part_nu,dist[nu]));
+                    bm.set(node_map[nu]);
+                }
+            }
+        }
+    }
+    for(int i = 0; i < num_node; i ++){
+        global_dist[start_id+i] = dist[i];
+    }
+
+}
+
 void cc_diag_iter_priority(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<int> &global_dist, int start_id, int num_node ,int num){
 //  int n = csr.n;
     int n = num_node;

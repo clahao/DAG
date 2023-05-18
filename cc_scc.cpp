@@ -154,6 +154,13 @@ int main(int argc, char ** argv) {
             vector<int> node_degree_inv_map = map_degree[0];        //重排序后的顶点id -> 原顶点id
             vector<int> node_degree_map = map_degree[1];            //原顶点id -> 重排序后的顶点id
             int node_index = map_degree[2][0];
+
+//            vector<int> init_map(scc_node_num[i],0);
+//            vector<int> init_inv_map(scc_node_num[i],0);
+//            for(int j = 0; j < scc_node_num[i]; j ++){
+//                init_map[j] = j;
+//                init_inv_map[j] = j;
+//            }
             //当前连通分量内部的状态传递
             long long int temp = cal_times;
             cc_diag_iter_priority(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);

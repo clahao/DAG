@@ -354,7 +354,7 @@ void pr_diag_iter_priority(long long int &cal_times, int node_index, const CSR& 
 
 }
 
-void pr_diag_iter_priority_plus(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<double> &global_delta, vector<double> &global_value, vector<int> outDegree, int start_id, int num_node ,int num){
+void pr_diag_iter_priority_plus(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<double> &global_delta, vector<double> &global_value, vector<int> outDegree, vector<int> indegree, int start_id, int num_node ,int num){
 //  int n = csr.n;
     int n = num_node;
     int partition = (n+num-1) / num;
@@ -389,14 +389,17 @@ void pr_diag_iter_priority_plus(long long int &cal_times, int node_index, const 
     for(auto i:part_start){
         vector<int> vertexs = vertex_n_partion(i, n, num);
         double priority = 0;
+        int node_num = 0;
         for(int j=0;j<vertexs.size();j++) {
             int u = vertexs[j];
             if(bm.get(u) == 1){
                 u = node_inv_map[u];
-                priority += delta[u];
+//                priority += delta[u];
+                node_num ++;
+                priority += indegree[u];
             }
         }
-        priorityQueue.push(make_pair(i,priority));
+        priorityQueue.push(make_pair(i,priority/node_num));
     }
 
 
@@ -524,14 +527,17 @@ void pr_diag_iter_priority_plus(long long int &cal_times, int node_index, const 
 
                 vector<int> vertexs = vertex_n_partion(part_nu, n, num);
                 double priority = 0;
+                int node_num = 0;
                 for(int j=0;j<vertexs.size();j++) {
                     int u = vertexs[j];
                     if(bm.get(u) == 1){
                         u = node_inv_map[u];
-                        priority += delta[u];
+                        node_num ++;
+//                        priority += delta[u];
+                        priority += indegree[u];
                     }
                 }
-                priorityQueue.push(make_pair(part_nu,priority));
+                priorityQueue.push(make_pair(part_nu,priority/node_num));
 
 //                priorityQueue.push(make_pair(part_nu,delta[nu]));
             }
