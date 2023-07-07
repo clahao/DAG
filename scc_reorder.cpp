@@ -301,24 +301,24 @@ vector<vector<int>> reorder_degree(CSR csr, CSR csc, int num){
     vector<int> node_map_inv(num_node,0);   //原顶点id -> 重排序后的顶点id
     vector<bool> is_visited(num_node,false);
     vector<int> degree(num_node,0);
-    vector<pair<int,int>> index(num_node,pair<int,int>(0,0));//first:id second:degree
-    for(int i = 0; i < num_node; i ++){
-        index[0].first = i;
-    }
-    for(int i = 0; i < num_node; i ++){
-        for(int j = csr.row_ptr[i]; j < csr.row_ptr[i+1]; j ++){
-            index[csr.col_idx[j]].second ++;
-            degree[csr.col_idx[j]] ++;
-        }
-    }
-    for(int i = 0; i < num_node; i ++){
-        for(int j = csc.row_ptr[i]; j < csc.row_ptr[i+1]; j ++){
-            index[csc.col_idx[j]].second ++;
-            degree[csc.col_idx[j]] ++;
-        }
-    }
-    sort(index.begin(),index.end(),cmp);
-//    vector<vector<queue<int>>> block(16,vector<queue<int>>());
+//    vector<pair<int,int>> index(num_node,pair<int,int>(0,0));//first:id second:degree
+//    for(int i = 0; i < num_node; i ++){
+//        index[0].first = i;
+//    }
+//    for(int i = 0; i < num_node; i ++){
+//        for(int j = csr.row_ptr[i]; j < csr.row_ptr[i+1]; j ++){
+//            index[csr.col_idx[j]].second ++;
+//            degree[csr.col_idx[j]] ++;
+//        }
+//    }
+//    for(int i = 0; i < num_node; i ++){
+//        for(int j = csc.row_ptr[i]; j < csc.row_ptr[i+1]; j ++){
+//            index[csc.col_idx[j]].second ++;
+//            degree[csc.col_idx[j]] ++;
+//        }
+//    }
+//    sort(index.begin(),index.end(),cmp);
+    vector<vector<queue<int>>> block(16,vector<queue<int>>());
     int node_index = 0;
     for(int i = 0; i < num_node; i ++){
         int node_id = i;//index[i].first;

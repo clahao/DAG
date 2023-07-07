@@ -21,7 +21,6 @@ void pr_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<do
         bm.set(i-start_id);
     }
 
-
     Bitmap bm_part(partition);
     queue<int> q;
     for(auto i:start){

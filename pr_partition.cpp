@@ -22,6 +22,241 @@ struct cmp_pr{
     }
 };
 
+void pr_DAG(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<double> &global_delta, vector<double> &global_value, vector<int> outDegree, int start_id, int num_node ,int num){
+    int n = num_node;
+    int partition = (n+num-1) / num;
+    if(start.size() == 0)
+        return;
+
+    vector<double> delta(global_delta.begin()+start_id,global_delta.begin()+start_id+num_node);
+    vector<double> delta_old = vector<double>(num_node,0);
+    vector<double> value(global_value.begin()+start_id,global_value.begin()+start_id+num_node);
+
+    Bitmap bm(n);
+    for(auto i:start){
+        bm.set(i-start_id);
+    }
+
+    Bitmap bm_part(partition);
+    queue<int> q;
+    for(auto i:start){
+        bm_part.set(get_partition(i-start_id, num));
+        q.push(get_partition(i-start_id, num));
+    }
+    while (!q.empty()) {
+        int s = q.size();
+        set<int> need_update;
+        while(s--){
+            int part = q.front();
+            q.pop();
+            bm_part.reset(part);
+
+            vector<int> vertexs = vertex_n_partion(part, n, num);
+            vector<bool> bm_cnt(partition,false); //模拟去0
+            for(int i=0;i<vertexs.size();i++){
+                int u = vertexs[i];
+                if(bm.get(u) == 1){
+                    value[u] += delta[u];
+                    vector<int> neigh = csr.neighbors(u);
+                    for(int j=0;j<neigh.size();j++){
+                        int v = neigh[j];
+                        int part_v = get_partition(v,num);
+                        if(bm_cnt[part_v] == false){
+                            cal_times += num * num;
+                            bm_cnt[part_v] = true;
+                        }
+                        delta_old[v] += delta[u] * damping_factor / outDegree[u];
+                        if(delta_old[v] > threshold){
+                            need_update.insert(v);
+                        }
+                    }
+                    bm.reset(u);
+                    delta[u] = 0;
+                }
+
+            }
+        }
+
+        for(auto nu : need_update){
+            if(delta_old[nu] > threshold){
+                delta[nu] = delta_old[nu];
+                delta_old[nu] = 0;
+                int part = get_partition(nu, num);
+                if(bm_part.get(part) == 0){
+                    q.push(part);
+                    bm_part.set(part);
+                }
+                bm.set(nu);
+            }
+        }
+//        if(num_node > 1){
+//            cal_times += num * num_node;
+//        }
+    }
+    for(int i = 0; i < num_node; i ++){
+        global_value[start_id+i] = value[i] + delta_old[i];
+    }
+
+}
+
+void pr_sync(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<double> &global_delta, vector<double> &global_value, vector<int> outDegree, int start_id, int num_node ,int num){
+    int n = num_node;
+    int partition = (n+num-1) / num;
+    if(start.size() == 0)
+        return;
+
+    vector<double> delta(global_delta.begin()+start_id,global_delta.begin()+start_id+num_node);
+    vector<double> delta_old = vector<double>(num_node,0);
+    vector<double> value(global_value.begin()+start_id,global_value.begin()+start_id+num_node);
+
+    Bitmap bm(n);
+    for(auto i:start){
+        bm.set(node_map[i-start_id]);
+    }
+
+    Bitmap bm_part(partition);
+    queue<int> q;
+    for(auto i:start){
+        bm_part.set(get_partition(node_map[i-start_id], num));
+        q.push(get_partition(node_map[i-start_id], num));
+    }
+    while (!q.empty()) {
+        int s = q.size();
+        set<int> need_update;
+        while(s--){
+            int part = q.front();
+            q.pop();
+            bm_part.reset(part);
+
+            vector<int> vertexs = vertex_n_partion(part, n, num);
+            vector<bool> bm_cnt(partition,false); //模拟去0
+            for(int i=0;i<vertexs.size();i++){
+                int u = vertexs[i];
+                if(bm.get(u) == 1){
+                    u = node_inv_map[u];
+                    value[u] += delta[u];
+                    vector<int> neigh = csr.neighbors(u);
+                    for(int j=0;j<neigh.size();j++){
+                        int v = neigh[j];
+                        int part_v = get_partition(v,num);
+                        if(bm_cnt[part_v] == false){
+                            cal_times += num * num;
+                            bm_cnt[part_v] = true;
+                        }
+                        delta_old[v] += delta[u] * damping_factor / outDegree[u];
+                        if(delta_old[v] > threshold){
+                            need_update.insert(v);
+                        }
+                    }
+                    bm.reset(node_map[u]);
+                    delta[u] = 0;
+                }
+
+            }
+        }
+
+        for(auto nu : need_update){
+            if(delta_old[nu] > threshold){
+                delta[nu] = delta_old[nu];
+                delta_old[nu] = 0;
+                int part = get_partition(node_map[nu], num);
+                if(bm_part.get(part) == 0){
+                    q.push(part);
+                    bm_part.set(part);
+                }
+                bm.set(node_map[nu]);
+            }
+        }
+//        if(num_node > 1){
+//            cal_times += num * num_node;
+//        }
+    }
+    for(int i = 0; i < num_node; i ++){
+        global_value[start_id+i] = value[i] + delta_old[i];
+    }
+
+}
+
+void pr_async(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<double> &global_delta, vector<double> &global_value, vector<int> outDegree, int start_id, int num_node ,int num){
+    int n = num_node;
+    int partition = (n+num-1) / num;
+    if(start.size() == 0)
+        return;
+
+    vector<double> delta(global_delta.begin()+start_id,global_delta.begin()+start_id+num_node);
+    vector<double> delta_old = vector<double>(num_node,0);
+    vector<double> value(global_value.begin()+start_id,global_value.begin()+start_id+num_node);
+
+    Bitmap bm(n);
+    for(auto i:start){
+        bm.set(node_map[i-start_id]);
+    }
+
+
+    Bitmap bm_part(partition);
+    queue<int> q;
+    for(auto i:start){
+        int part = get_partition(node_map[i-start_id], num);
+        if(bm_part.get(part) == 0){
+            bm_part.set(part);
+            q.push(part);
+        }
+//        bm_part.set(get_partition(i-start_id, num));
+//        q.push(get_partition(i-start_id, num));
+    }
+    while (!q.empty()) {
+        int part = q.front();
+        q.pop();
+        bm_part.reset(part);
+        set<int> need_update;
+        vector<int> vertexs = vertex_n_partion(part, n, num);
+        vector<bool> bm_cnt(partition,false); //模拟去0
+        for(int i=0;i<vertexs.size();i++){
+            int u = vertexs[i];
+            if(bm.get(u) == 1){
+                u = node_inv_map[u];
+                value[u] += delta[u];
+                vector<int> neigh = csr.neighbors(u);
+                for(int j=0;j<neigh.size();j++){
+                    int v = neigh[j];
+                    int part_v = get_partition(v,num);
+                    if(bm_cnt[part_v] == false){
+                        cal_times += num * num;
+                        bm_cnt[part_v] = true;
+                    }
+                    delta_old[v] += delta[u] * damping_factor / outDegree[u];
+                    if((delta_old[v] + delta[v] > threshold && part != part_v) || (delta_old[v] > threshold && part == part_v)){
+                        need_update.insert(v);
+                    }
+                }
+                bm.reset(node_map[u]);
+                delta[u] = 0;
+            }
+
+        }
+
+        for(auto nu : need_update){
+//            if(delta_old[nu] + delta[nu]> threshold){
+            delta[nu] += delta_old[nu];
+            delta_old[nu] = 0;
+            int part = get_partition(node_map[nu], num);
+            if(bm_part.get(part) == 0){
+                q.push(part);
+                bm_part.set(part);
+            }
+            bm.set(node_map[nu]);
+//            }
+        }
+//        if(num_node > 1){
+//            cal_times += num * num_node;
+//        }
+    }
+    for(int i = 0; i < num_node; i ++){
+        global_value[start_id+i] = value[i] + delta_old[i];
+    }
+
+}
+
 void pr_diag_iter(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<double> &global_delta, vector<double> &global_value, vector<int> outDegree, int start_id, int num_node ,int num){
 //  int n = csr.n;
     int n = num_node;

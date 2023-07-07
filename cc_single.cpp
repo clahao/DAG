@@ -1,12 +1,12 @@
 //
-// Created by moyu on 2023/5/16.
+// Created by moyu on 2023/6/5.
 //
 #include "Graph.cpp"
 #include "timer.h"
 #include "timer.cpp"
 
 
-void cc_async(long long int &cal_times, const CSR& csr, set<int> start, vector<int> &global_dist, int start_id, int num_node ,int num){
+void cc_sync(long long int &cal_times, const CSR& csr, set<int> start, vector<int> &global_dist, int start_id, int num_node ,int num=1){
     int n = num_node;
     int partition = (n+num-1) / num;
     if(start.size() == 0)
@@ -38,7 +38,7 @@ void cc_async(long long int &cal_times, const CSR& csr, set<int> start, vector<i
         bm_part.reset(part);
         set<int> need_update;
         vector<int> vertexs = vertex_n_partion(part, n, num);
-        vector<bool> bm_cnt(partition,false); //模拟去0
+//        vector<bool> bm_cnt(partition,false); //模拟去0
         for(int i=0;i<vertexs.size();i++){
             int u = vertexs[i];
             if(bm.get(u) == 1){
@@ -46,10 +46,10 @@ void cc_async(long long int &cal_times, const CSR& csr, set<int> start, vector<i
                 for(int j=0;j<neigh.size();j++){
                     int v = neigh[j];
                     int part_v = get_partition(v,num);
-                    if(bm_cnt[part_v] == false){
-                        cal_times += num * num;
-                        bm_cnt[part_v] = true;
-                    }
+//                    if(bm_cnt[part_v] == false){
+//                        cal_times += num * num;
+//                        bm_cnt[part_v] = true;
+//                    }
                     dist_old[v] = min(dist_old[v], dist[u]);
                     if(dist_old[v] < dist[v]){
                         need_update.insert(v);
@@ -83,11 +83,10 @@ void cc_async(long long int &cal_times, const CSR& csr, set<int> start, vector<i
 
 int main(int argc, char ** argv){
     string filename(argv[1]);
-    int num = stoi(argv[2]);
     Graph<OutEdge> graph(filename, false);
     int source_node = 0;    //以重排序前的0顶点为源顶点
-    if(argc == 4){
-        source_node = stoi(argv[3]);
+    if(argc == 3){
+        source_node = stoi(argv[2]);
     }
     CSR csr;
     csr.n = graph.num_nodes;
@@ -109,7 +108,7 @@ int main(int argc, char ** argv){
         start.insert(i);
     Timer timer;
     timer.Start();
-    cc_async(cal_times,csr,start,global_dist,0,graph.num_nodes,num);
+    cc_sync(cal_times,csr,start,global_dist,0,graph.num_nodes);
     float runtime = timer.Finish();
     cout << "Processing finished in " << runtime/1000 << " (s).\n";
     cout<<"calculation times: "<<cal_times<<endl;

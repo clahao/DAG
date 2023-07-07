@@ -24,6 +24,10 @@
 #include <stack>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
+#include <immintrin.h>
+//#include <x86intrin.h>
+#include <avx512vlbwintrin.h>
 
 using namespace std;
 using Adouble = atomic<double>;
@@ -37,6 +41,7 @@ typedef unsigned long long ll;
 //#define heap_factor 0.005
 #define package_num 10
 #define package_interval 5
+#define SIMD_SIZE 16
 
 struct OutEdge {
     uint end;
@@ -123,5 +128,6 @@ inline int get_partition(int i, int num){
 }
 
 const int INF = numeric_limits<int>::max()/2 - 1;
+const int INF_SHORT = numeric_limits<short>::max()/2 - 1;
 
 #endif //DAG_GLOBAL_H

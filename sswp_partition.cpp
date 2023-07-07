@@ -209,4 +209,232 @@ void sswp_diag_iter_priority(long long int &cal_times, int node_index, const CSR
 
 }
 
+void sswp_DAG(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<int> &global_dist, int start_id, int num_node ,int num){
+    int n = num_node;
+    int partition = (n+num-1) / num;
+    if(start.size() == 0)
+        return;
+
+    vector<int> dist(global_dist.begin()+start_id,global_dist.begin()+start_id+num_node);
+    vector<int> dist_old(global_dist.begin()+start_id,global_dist.begin()+start_id+num_node);
+
+    Bitmap bm(n);
+    for(auto i:start){
+        bm.set(i-start_id);
+    }
+
+
+    Bitmap bm_part(partition);
+    queue<int> q;
+    for(auto i:start){
+        bm_part.set(get_partition(i-start_id, num));
+        q.push(get_partition(i-start_id, num));
+    }
+    while (!q.empty()) {
+        int s = q.size();
+        set<int> need_update;
+        while(s--){
+            int part = q.front();
+            q.pop();
+            bm_part.reset(part);
+
+            vector<int> vertexs = vertex_n_partion(part, n, num);
+            vector<bool> bm_cnt(partition,false); //模拟去0
+            for(int i=0;i<vertexs.size();i++){
+                int u = vertexs[i];
+                if(bm.get(u) == 1){
+                    vector<int> neigh = csr.neighbors(u);
+                    vector<int> neighbors_w = csr.neighbors_weights(u);
+                    for(int j=0;j<neigh.size();j++){
+                        int v = neigh[j];
+                        int part_v = get_partition(v,num);
+                        if(bm_cnt[part_v] == false){
+                            cal_times += num * num;
+                            bm_cnt[part_v] = true;
+                        }
+                        int vweight = neighbors_w[j];
+                        dist_old[v] = max(dist_old[v], min(vweight,dist[u]));
+                        if(dist_old[v] > dist[v]){
+                            need_update.insert(v);
+                        }
+                    }
+                    bm.reset(u);
+                }
+            }
+        }
+
+        for(auto nu : need_update){
+            if(dist[nu] < dist_old[nu]){
+                dist[nu] = max(dist[nu], dist_old[nu]);
+                dist_old[nu] = dist[nu];
+                int part = get_partition(nu, num);
+                if(bm_part.get(part) == 0){
+                    q.push(part);
+                    bm_part.set(part);
+                }
+                bm.set(nu);
+            }
+        }
+//        if(num_node > 1){
+//            cal_times += num * num_node;
+//        }
+    }
+    for(int i = 0; i < num_node; i ++){
+        global_dist[start_id+i] = dist[i];
+    }
+
+}
+
+void sswp_sync(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<int> &global_dist, int start_id, int num_node ,int num){
+    int n = num_node;
+    int partition = (n+num-1) / num;
+    if(start.size() == 0)
+        return;
+
+    vector<int> dist(global_dist.begin()+start_id,global_dist.begin()+start_id+num_node);
+    vector<int> dist_old(global_dist.begin()+start_id,global_dist.begin()+start_id+num_node);
+
+    Bitmap bm(n);
+    for(auto i:start){
+        bm.set(node_map[i-start_id]);
+    }
+
+
+    Bitmap bm_part(partition);
+    queue<int> q;
+    for(auto i:start){
+        bm_part.set(get_partition(node_map[i-start_id], num));
+        q.push(get_partition(node_map[i-start_id], num));
+    }
+    while (!q.empty()) {
+        int s = q.size();
+        set<int> need_update;
+        while(s--){
+            int part = q.front();
+            q.pop();
+            bm_part.reset(part);
+
+            vector<int> vertexs = vertex_n_partion(part, n, num);
+            vector<bool> bm_cnt(partition,false); //模拟去0
+            for(int i=0;i<vertexs.size();i++){
+                int u = vertexs[i];
+                if(bm.get(u) == 1){
+                    u = node_inv_map[u];
+                    vector<int> neigh = csr.neighbors(u);
+                    vector<int> neighbors_w = csr.neighbors_weights(u);
+                    for(int j=0;j<neigh.size();j++){
+                        int v = neigh[j];
+                        int part_v = get_partition(v,num);
+                        if(bm_cnt[part_v] == false){
+                            cal_times += num * num;
+                            bm_cnt[part_v] = true;
+                        }
+                        int vweight = neighbors_w[j];
+                        dist_old[v] = max(dist_old[v], min(vweight,dist[u]));
+                        if(dist_old[v] > dist[v]){
+                            need_update.insert(v);
+                        }
+                    }
+                    bm.reset(node_map[u]);
+                }
+            }
+        }
+
+        for(auto nu : need_update){
+            if(dist[nu] < dist_old[nu]){
+                dist[nu] = max(dist[nu], dist_old[nu]);
+                dist_old[nu] = dist[nu];
+                int part = get_partition(node_map[nu], num);
+                if(bm_part.get(part) == 0){
+                    q.push(part);
+                    bm_part.set(part);
+                }
+                bm.set(node_map[nu]);
+            }
+        }
+//        if(num_node > 1){
+//            cal_times += num * num_node;
+//        }
+    }
+    for(int i = 0; i < num_node; i ++){
+        global_dist[start_id+i] = dist[i];
+    }
+
+}
+
+void sswp_async(long long int &cal_times, int node_index, const CSR& csr, const CSR& csc, set<int> start, vector<int> node_map, vector<int> node_inv_map, vector<int> &global_dist, int start_id, int num_node ,int num){
+    int n = num_node;
+    int partition = (n+num-1) / num;
+    if(start.size() == 0)
+        return;
+
+    vector<int> dist(global_dist.begin()+start_id,global_dist.begin()+start_id+num_node);
+    vector<int> dist_old(global_dist.begin()+start_id,global_dist.begin()+start_id+num_node);
+
+    Bitmap bm(n);
+    for(auto i:start){
+        bm.set(node_map[i-start_id]);
+    }
+
+
+    Bitmap bm_part(partition);
+    queue<int> q;
+    for(auto i:start){
+        int part = get_partition(node_map[i-start_id], num);
+        if(bm_part.get(part) == 0){
+            bm_part.set(part);
+            q.push(part);
+        }
+    }
+    while (!q.empty()) {
+        int part = q.front();
+        q.pop();
+        bm_part.reset(part);
+        set<int> need_update;
+        vector<int> vertexs = vertex_n_partion(part, n, num);
+        vector<bool> bm_cnt(partition,false); //模拟去0
+        for(int i=0;i<vertexs.size();i++){
+            int u = vertexs[i];
+            if(bm.get(u) == 1){
+                u = node_inv_map[u];
+                vector<int> neigh = csr.neighbors(u);
+                vector<int> neighbors_w = csr.neighbors_weights(u);
+                for(int j=0;j<neigh.size();j++){
+                    int v = neigh[j];
+                    int part_v = get_partition(v,num);
+                    if(bm_cnt[part_v] == false){
+                        cal_times += num * num;
+                        bm_cnt[part_v] = true;
+                    }
+                    int vweight = neighbors_w[j];
+                    dist_old[v] = max(dist_old[v], min(vweight,dist[u]));
+                    if(dist_old[v] > dist[v]){
+                        need_update.insert(v);
+                    }
+                }
+                bm.reset(node_map[u]);
+            }
+        }
+        for(auto nu : need_update){
+            if(dist[nu] < dist_old[nu]){
+                dist[nu] = max(dist[nu], dist_old[nu]);
+                dist_old[nu] = dist[nu];
+                int part = get_partition(node_map[nu], num);
+                if(bm_part.get(part) == 0){
+                    q.push(part);
+                    bm_part.set(part);
+                }
+                bm.set(node_map[nu]);
+            }
+        }
+//        if(num_node > 1){
+//            cal_times += num * num_node;
+//        }
+    }
+    for(int i = 0; i < num_node; i ++){
+        global_dist[start_id+i] = dist[i];
+    }
+
+}
+
 #endif

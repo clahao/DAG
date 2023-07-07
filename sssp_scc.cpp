@@ -14,6 +14,8 @@ int main(int argc, char ** argv) {
     string filename(argv[1]);
     int num = stoi(argv[2]);
     Timer timer;
+    Timer pre_timer;
+    Timer process_timer;
     Graph<OutEdgeWeighted> graph(filename, true);
     int source_node = 0;    //以重排序前的0顶点为源顶点
     if(argc == 4){
@@ -40,9 +42,14 @@ int main(int argc, char ** argv) {
     for(int i = 0; i < graph.num_edges; i ++)
         weight[i] = int(graph.edgeList[i].w8);
 
+    timer.Start();
     int scc_num;
     int max_scc_id = 0;
+    float pre_runtime = 0;
+//    pre_timer.Start();
     vector<int> map = top_scc(source_node,max_scc_id,graph.num_nodes,graph.num_edges,offset,neighbor,weight,scc_num,scc,scc_node_num,offset_scc,neighbor_scc,weight_scc,split_scc);
+//    pre_runtime = pre_timer.Finish();
+    float processing_time = 0;
     int node_start_index = 0;     //当前连通分量第一个顶点的id
     long long int cal_times = 0;
     long long int cal_times_community = 0;
@@ -52,10 +59,7 @@ int main(int argc, char ** argv) {
     global_dist[map[source_node]] = 0;
     start_node_list[scc[map[source_node]]].insert(map[source_node]);
 
-    timer.Start();
     cout << "Processing start"<<endl;
-    int sum0 = 0;
-    int sum1 = 0;
     for(int i = 0; i < scc_num; i ++){
         if(start_node_list[i].empty()){
             node_start_index += scc_node_num[i];
@@ -186,12 +190,12 @@ int main(int argc, char ** argv) {
 //            node_map[i] = i;
 //            node_inv_map[i] = i;
 //        }
-            vector<vector<int>> map_community = reorder_community(csr);
-            vector<int> node_map = map_community[0];        //原顶点id -> 重排序后的顶点id
-            vector<int> node_inv_map = map_community[1];    //重排序后的顶点id -> 原顶点id
-            vector<int> community = map_community[2];
-            unordered_map<int,vector<int>> community_node;
-            unordered_map<int,int> community_node_num;
+//            vector<vector<int>> map_community = reorder_community(csr);
+//            vector<int> node_map = map_community[0];        //原顶点id -> 重排序后的顶点id
+//            vector<int> node_inv_map = map_community[1];    //重排序后的顶点id -> 原顶点id
+//            vector<int> community = map_community[2];
+//            unordered_map<int,vector<int>> community_node;
+//            unordered_map<int,int> community_node_num;
             //比较最大强连通分量中社区内元素稠密度和重排序前的稠密度
             if(i == max_scc_id){
                 cout<<"vertex num in largest scc: "<<scc_node_num[i]<<endl;
@@ -221,11 +225,14 @@ int main(int argc, char ** argv) {
 //                }
             }
             //16-size-blocK顶点重排序
+            pre_timer.Start();
             vector<vector<int>> map_degree = reorder_degree(csr,csc,num);
+            pre_runtime += pre_timer.Finish();
             vector<int> node_degree_inv_map = map_degree[0];        //重排序后的顶点id -> 原顶点id
             vector<int> node_degree_map = map_degree[1];            //原顶点id -> 重排序后的顶点id
             int node_index = map_degree[2][0];
             //当前连通分量内部的状态传递
+            process_timer.Start();
             long long int temp = cal_times;
 //            sssp_rabbit_push_pull_16size(cal_times,cal_times_community,cal_times_between_communities,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,community,global_dist,node_start_index,scc_node_num[i],num);
 //            sssp_rabbit_push_pull_16size_priority(cal_times,cal_times_community,cal_times_between_communities,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,community,global_dist,node_start_index,scc_node_num[i],num);
@@ -233,8 +240,12 @@ int main(int argc, char ** argv) {
 //            sssp_rabbit(cal_times,cal_times_community,cal_times_between_communities,csr,start_node_list[i],node_map,node_inv_map,community,global_dist,node_start_index,scc_node_num[i],num);
 //            sssp_rabbit_diag_iter(cal_times,cal_times_community,cal_times_between_communities,csr,csc,start_node_list[i],node_map,node_inv_map,community,global_dist,node_start_index,scc_node_num[i],num);
 //            sssp_diag_iter(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,community,global_dist,node_start_index,scc_node_num[i],num);
-            sssp_diag_iter_priority(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,community,global_dist,node_start_index,scc_node_num[i],num);
+            sssp_diag_iter_priority(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
+//            sssp_sync(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
+//            sssp_async(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
+//            sssp_DAG(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
 //            sssp(cal_times,csr,start_node_list[i],global_dist,node_start_index,scc_node_num[i],num,sum0,sum1);
+            processing_time += process_timer.Finish();
         }
 
 //        if(i != max_scc_id)
@@ -242,6 +253,7 @@ int main(int argc, char ** argv) {
 //        cout<<i<<" "<<start_node_list[i].size()<<endl;
         //连通分量之间的状态传递
 //        long long int cal_size = 0;   //连通分量间计算的矩阵维度
+        process_timer.Start();
         long long int part_num = 0;
 //        int row_part_num = (csr.n+num-1)/num;
         vector<bool> visit((graph.num_nodes+num-1)/num,false);
@@ -274,13 +286,14 @@ int main(int argc, char ** argv) {
 
         cal_times += part_num * num * num;
         node_start_index += scc_node_num[i];
+        processing_time += process_timer.Finish();
     }
     float runtime = timer.Finish();
-    cout << "Processing finished in " << runtime/1000 << " (s).\n";
-    cout<<"one active node part num: "<<sum0<<endl;
-    cout<<"multiple active nodes part num: "<<sum1<<endl;
+    cout << "Total runtime: " << runtime/1000 << " (s).\n";
+    cout << "Pre-processing finished in " << pre_runtime/1000 << " (s).\n";
+    cout << "Processing finished in " << processing_time/1000 << " (s).\n";
+    cout << "Total processing time: " << (pre_runtime+processing_time)/1000 << " (s).\n";
     cout<<"calculation times: "<<cal_times<<endl;
-    cout<<"calculation times col: "<<cal_times_community<<endl;
 //    cout<<"Proportion of calculation outside the community: "<<double(cal_times_between_communities)/cal_times_community<<endl;
     int update_num = 0;
     for(int i = 0; i < graph.num_nodes; i ++){
