@@ -241,6 +241,7 @@ int main(int argc, char ** argv) {
 //            sssp_rabbit_diag_iter(cal_times,cal_times_community,cal_times_between_communities,csr,csc,start_node_list[i],node_map,node_inv_map,community,global_dist,node_start_index,scc_node_num[i],num);
 //            sssp_diag_iter(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,community,global_dist,node_start_index,scc_node_num[i],num);
             sssp_diag_iter_priority(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
+//            sssp_priority(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
 //            sssp_sync(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
 //            sssp_async(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
 //            sssp_DAG(cal_times,node_index,csr,csc,start_node_list[i],node_degree_map,node_degree_inv_map,global_dist,node_start_index,scc_node_num[i],num);
